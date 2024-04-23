@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@DynamoDBDocument
+@DynamoDBTable(tableName = "customer")
 public class Customer implements User {
 
     @DynamoDBHashKey
