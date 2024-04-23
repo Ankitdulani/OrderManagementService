@@ -10,7 +10,7 @@ import java.util.List;
 @Service
 public class OrderService {
 
-    private  OrderRepository orderRepository;
+    private final OrderRepository orderRepository;
 
     @Autowired
     public OrderService(OrderRepository orderRepository) {
@@ -18,29 +18,23 @@ public class OrderService {
     }
 
 
-
     public void createOrder(Order order) {
-       orderRepository.save(order);
-
+        orderRepository.save(order);
     }
 
 
-    public void updateOrder(String orderID,Order order) {
+    public void updateOrder(String orderID, Order order) {
         Order existingOrder = orderRepository.findById(orderID).orElse(null);
-        if(existingOrder == null){
-
-            return ;
+        if (existingOrder == null) {
+            return;
         }
-
-        existingOrder=order;
+        existingOrder = order;
         orderRepository.save(existingOrder);
-
     }
 
 
     public void deleteOrder(String orderID) {
         orderRepository.deleteById(orderID);
-
     }
 
 
