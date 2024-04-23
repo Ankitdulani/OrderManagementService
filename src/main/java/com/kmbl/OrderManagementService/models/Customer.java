@@ -30,4 +30,9 @@ public class Customer implements User {
     public UserType getUserType() {
         return UserType.CUSTOMER;
     }
+
+    @Override
+    public String getName() {
+        return name;
+    }
 }
