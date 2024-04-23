@@ -43,7 +43,7 @@ public class OrderItemController {
     }
 
     @DeleteMapping("/{orderItemID}")
-    public ResponseEntity<OrderItem> deleteSellerDetails(@PathVariable("OrderItemID") String id) {
+    public ResponseEntity<OrderItem> deleteOrderDetails(@PathVariable("OrderItemID") String id) {
         orderItemService.deleteOrderItem(id);
         OrderItem existingItem = orderItemService.getOrderItem(id);
         if (existingItem == null) {
@@ -54,7 +54,7 @@ public class OrderItemController {
     }
 
     @PutMapping("/{OrderItemID}")
-    public ResponseEntity<HttpStatus> updateSeller(@PathVariable("id") String orderItemID, @RequestBody OrderItem orderItem) {
+    public ResponseEntity<HttpStatus> updateOrderItem(@PathVariable("id") String orderItemID, @RequestBody OrderItem orderItem) {
         orderItemService.updateOrderItem(orderItemID, orderItem);
         return new ResponseEntity<>(HttpStatus.OK);
     }
