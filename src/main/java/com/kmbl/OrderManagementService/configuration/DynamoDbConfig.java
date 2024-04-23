@@ -14,7 +14,7 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.data.repository.Repository;
 
 @Configuration
-@EnableDynamoDBRepositories(basePackages = "com.kmbl.OrderManagementService.repositories")
+@EnableDynamoDBRepositories(basePackages = "com.kmbl.InventoryManagementService.repositories")
 public class DynamoDbConfig {
 
     @Value("${amazon.dynamodb.endpoint}")
