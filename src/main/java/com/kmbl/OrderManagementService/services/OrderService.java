@@ -10,11 +10,11 @@ import java.util.List;
 @Service
 public class OrderService {
 
-    private OrderRepository orderRepository;
+    private  OrderRepository orderRepository;
 
     @Autowired
     public OrderService(OrderRepository orderRepository) {
-        orderRepository = orderRepository;
+        this.orderRepository = orderRepository;
     }
 
 
