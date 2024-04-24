@@ -26,5 +26,4 @@ public class Order {
 
     @DynamoDBAttribute
     private List<OrderItem> orderItems;
-
 }
