@@ -1,7 +1,6 @@
 package com.kmbl.OrderManagementService.controllers;
 
 
-import com.kmbl.OrderManagementService.exceptions.ResourceNotFoundException;
 import com.kmbl.OrderManagementService.models.Order;
 import com.kmbl.OrderManagementService.services.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.kmbl.OrderManagementService.exceptions.ResourceNotFoundException;
 
 import java.util.List;
 
@@ -44,6 +44,17 @@ public class OrderController {
     public ResponseEntity<Order> createOrderDetails(@RequestBody Order order) {
         Order createdOrder = orderService.createOrder(order);
         return new ResponseEntity<>(createdOrder, HttpStatus.CREATED);
+    }
+
+    @PostMapping(value = "/cancel/{orderId}")
+    public ResponseEntity<Order> cancel(@PathVariable("orderId") String orderId) {
+        try{
+            Order existingItem = orderService.getOrder(orderId);
+            orderService.cancelOrder(existingItem);
+            return new ResponseEntity<>(existingItem,HttpStatus.OK);
+        }catch (ResourceNotFoundException ex){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @DeleteMapping("/{orderID}")

@@ -1,7 +1,10 @@
 package com.kmbl.OrderManagementService.services;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.kmbl.OrderManagementService.exceptions.ResourceNotFoundException;
 import com.kmbl.OrderManagementService.models.Order;
+import com.kmbl.OrderManagementService.models.OrderStatus;
+import com.kmbl.OrderManagementService.models.kafka.CancelOrderMessage;
 import com.kmbl.OrderManagementService.repositories.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,10 +15,14 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final KafkaMessagingService messagingService;
+    private final DynamoDBMapper mapper;
 
     @Autowired
-    public OrderService(OrderRepository orderRepository) {
+    public OrderService(OrderRepository orderRepository, KafkaMessagingService kafkaMessagingService,DynamoDBMapper mapper) {
         this.orderRepository = orderRepository;
+        this.messagingService = kafkaMessagingService;
+        this.mapper = mapper;
     }
 
     public Order createOrder(Order order) {
@@ -44,5 +51,14 @@ public class OrderService {
 
     public List<Order> getAllOrders() {
         return (List<Order>) orderRepository.findAll();
+    }
+
+    public void cancelOrder(Order order) {
+        //TODO: validation if already cancelled dont update inventory to ensure idempotency
+        CancelOrderMessage message = new CancelOrderMessage(order);
+        messagingService.publish(message);
+        order.getOrderItems().stream().forEach(
+                orderItem -> { orderItem.setStatus(OrderStatus.Status.ORDER_CANCELLED.getValue());}
+        );
     }
 }

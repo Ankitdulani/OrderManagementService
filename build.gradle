@@ -31,6 +31,8 @@ dependencies {
 	implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.64'
 	implementation 'com.github.derjust:spring-data-dynamodb:5.1.0'
 	implementation 'org.springframework.data:spring-data-releasetrain:Lovelace-SR16'
+	implementation 'org.springframework.integration:spring-integration-kafka:6.2.4'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
 }
 
 tasks.named('test') {
