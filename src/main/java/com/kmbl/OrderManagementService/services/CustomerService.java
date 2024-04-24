@@ -1,5 +1,6 @@
 package com.kmbl.OrderManagementService.services;
 
+import com.kmbl.OrderManagementService.exceptions.ResourceNotFoundException;
 import com.kmbl.OrderManagementService.models.Customer;
 import com.kmbl.OrderManagementService.repositories.CustomerRepository;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,11 @@ public class CustomerService {
         return customerRepository.save(customer);
     }
 
-    public Customer getCustomerById(String customerId) {
-        return customerRepository.findById(customerId).orElse(null);
+    public Customer getCustomerById(String customerId) throws ResourceNotFoundException {
+        Customer customer = customerRepository.findById(customerId).orElse(null);
+        if(customer == null) {
+            throw new ResourceNotFoundException("Customer Id : {} is not present", customerId);
+        }
+        return customer;
     }
 }

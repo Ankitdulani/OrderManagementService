@@ -1,5 +1,6 @@
 package com.kmbl.OrderManagementService.services;
 
+import com.kmbl.OrderManagementService.exceptions.ResourceNotFoundException;
 import com.kmbl.OrderManagementService.models.Order;
 import com.kmbl.OrderManagementService.repositories.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,34 +18,31 @@ public class OrderService {
         this.orderRepository = orderRepository;
     }
 
-
-    public void createOrder(Order order) {
-        orderRepository.save(order);
+    public Order createOrder(Order order) {
+        return orderRepository.save(order);
     }
 
-
-    public void updateOrder(String orderID, Order order) {
-        Order existingOrder = orderRepository.findById(orderID).orElse(null);
+    public Order updateOrder(Order order) throws ResourceNotFoundException {
+        Order existingOrder = orderRepository.findById(order.getOrderId()).orElse(null);
         if (existingOrder == null) {
-            return;
+            throw new ResourceNotFoundException("Order Id : {} is not present", order.getOrderId());
         }
-        existingOrder = order;
-        orderRepository.save(existingOrder);
+        return orderRepository.save(order);
     }
-
 
     public void deleteOrder(String orderID) {
         orderRepository.deleteById(orderID);
     }
 
-
-    public Order getOrder(String orderID) {
-        return orderRepository.findById(orderID).orElse(null);
+    public Order getOrder(String orderID) throws ResourceNotFoundException {
+        Order order = orderRepository.findById(orderID).orElse(null);
+        if(order == null) {
+            throw new ResourceNotFoundException("Order Id : {} is not present", orderID);
+        }
+        return order;
     }
-
 
     public List<Order> getAllOrders() {
         return (List<Order>) orderRepository.findAll();
     }
-
 }

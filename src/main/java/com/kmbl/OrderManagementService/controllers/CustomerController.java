@@ -27,8 +27,11 @@ public class CustomerController {
 
     @GetMapping(value = "{customerId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Customer> getCustomer(@PathVariable String customerId) {
-        Customer customer = customerService.getCustomerById(customerId);
-        if(customer == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        return new ResponseEntity<>(customer, HttpStatus.OK);
+        try {
+            Customer customer = customerService.getCustomerById(customerId);
+            return new ResponseEntity<>(customer, HttpStatus.OK);
+        } catch (Exception exception) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }

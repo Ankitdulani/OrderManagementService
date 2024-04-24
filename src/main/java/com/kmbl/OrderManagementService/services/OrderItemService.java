@@ -1,5 +1,6 @@
 package com.kmbl.OrderManagementService.services;
 
+import com.kmbl.OrderManagementService.exceptions.ResourceNotFoundException;
 import com.kmbl.OrderManagementService.models.OrderItem;
 import com.kmbl.OrderManagementService.repositories.OrderItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,31 +17,30 @@ public class OrderItemService {
         this.orderItemRepository = orderItemRepository;
     }
 
-
-    public void createOrder(OrderItem orderItem) {
-        orderItemRepository.save(orderItem);
+    public OrderItem createOrder(OrderItem orderItem) {
+        return orderItemRepository.save(orderItem);
     }
 
-
-    public void updateOrderItem(String orderItemID, OrderItem orderItem) {
+    public OrderItem updateOrderItem(String orderItemID, OrderItem orderItem) throws ResourceNotFoundException {
         OrderItem existingOrderItem = orderItemRepository.findById(orderItemID).orElse(null);
         if (existingOrderItem == null) {
-            return;
+            throw new ResourceNotFoundException("OrderItemId : {} is not present", orderItemID);
         }
-        existingOrderItem = orderItem;
-        orderItemRepository.save(existingOrderItem);
+        orderItem.setOrderItemId(orderItemID);
+        return orderItemRepository.save(orderItem);
     }
-
 
     public void deleteOrderItem(String orderItemID) {
         orderItemRepository.deleteById(orderItemID);
     }
 
-
-    public OrderItem getOrderItem(String orderItemID) {
-        return orderItemRepository.findById(orderItemID).orElse(null);
+    public OrderItem getOrderItem(String orderItemID) throws ResourceNotFoundException {
+        OrderItem orderItem = orderItemRepository.findById(orderItemID).orElse(null);
+        if(orderItem == null) {
+            throw new ResourceNotFoundException("OrderItemId : {} is not present", orderItemID);
+        }
+        return orderItem;
     }
-
 
     public List<OrderItem> getAllOrderItems() {
         return (List<OrderItem>) orderItemRepository.findAll();

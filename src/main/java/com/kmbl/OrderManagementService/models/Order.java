@@ -19,7 +19,7 @@ public class Order {
     private String orderId;
 
     @DynamoDBAttribute
-    private String CustomerId;
+    private String customerId;
 
     @DynamoDBAttribute
     private String deliveryAddress;

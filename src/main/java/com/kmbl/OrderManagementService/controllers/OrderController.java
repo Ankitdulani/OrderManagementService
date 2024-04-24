@@ -1,6 +1,7 @@
 package com.kmbl.OrderManagementService.controllers;
 
 
+import com.kmbl.OrderManagementService.exceptions.ResourceNotFoundException;
 import com.kmbl.OrderManagementService.models.Order;
 import com.kmbl.OrderManagementService.services.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/Order")
+@RequestMapping("/api/orders")
 public class OrderController {
     private final OrderService orderService;
 
@@ -24,11 +25,12 @@ public class OrderController {
     @GetMapping(value = "/{orderID}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<Order> getOrder(@PathVariable("orderID") String orderID) {
-        Order item = orderService.getOrder(orderID);
-        if (item == null) {
-            return new ResponseEntity<>(item, HttpStatus.OK);
+        try {
+            Order order = orderService.getOrder(orderID);
+            return new ResponseEntity<>(order, HttpStatus.OK);
+        } catch (Exception exception) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
 
@@ -39,24 +41,30 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<HttpStatus> createOrderDetails(@RequestBody Order order) {
-        return new ResponseEntity<>(HttpStatus.CREATED);
+    public ResponseEntity<Order> createOrderDetails(@RequestBody Order order) {
+        Order createdOrder = orderService.createOrder(order);
+        return new ResponseEntity<>(createdOrder, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{orderID}")
-    public ResponseEntity<Order> deleteOrderDetails(@PathVariable("OrderID") String id) {
-        orderService.deleteOrder(id);
-        Order existingItem = orderService.getOrder(id);
-        if (existingItem == null) {
+    public ResponseEntity<Order> deleteOrderDetails(@PathVariable("orderID") String orderID) {
+        try {
+          Order order = orderService.getOrder(orderID);
+          orderService.deleteOrder(order.getOrderId());
+          return new ResponseEntity<>(order, HttpStatus.NO_CONTENT);
+        } catch (Exception exception) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        orderService.deleteOrder(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PutMapping("/{OrderID}")
-    public ResponseEntity<HttpStatus> updateOrder(@PathVariable("id") String orderID, @RequestBody Order order) {
-        orderService.updateOrder(orderID, order);
-        return new ResponseEntity<>(HttpStatus.OK);
+    @PutMapping("/{orderID}")
+    public ResponseEntity<Order> updateOrder(@PathVariable("orderID") String orderID, @RequestBody Order order) {
+        try {
+            order.setOrderId(orderID);
+            Order updatedOrder = orderService.updateOrder(order);
+            return new ResponseEntity<>(updatedOrder, HttpStatus.OK);
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }
