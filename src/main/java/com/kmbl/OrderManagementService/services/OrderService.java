@@ -69,7 +69,7 @@ public class OrderService {
     
             // Make POST request with IMSRequestBody
             Mono<String> data = webClient.post()
-                    .uri("/api/inventory/updateinventory")
+                    .uri("/api/inventory/updateInventory")
                     .body(BodyInserters.fromValue(imsRequestBodyList))
                     .retrieve()
                     .bodyToMono(String.class);
@@ -81,6 +81,7 @@ public class OrderService {
             IMSResponseObject imsResponseObject = objectMapper.readValue(jsonResult, IMSResponseObject.class);
             String status = imsResponseObject.getInventoryOrderStatus();
             logger.info("Status from IMS: " + status);
+            logger.info("Data from IMS: " + imsResponseObject.getResponseObjects());
     
             // Handle different statuses
             if ("PARTIAL_ORDER".equals(status) || "COMPLETE_ORDER".equals(status)) {
@@ -90,14 +91,14 @@ public class OrderService {
                 List<OrderItem> updatedOrderItems = new ArrayList<>();
 
                 for (ResponseObject responseObject : responseObjects) {
-
+                    logger.info("Data from IMS: responseObject" + responseObject.getData());
                     String orderItemstatus = responseObject.getStatus();
                     Integer count = responseObject.getCount();
                     OrderItem orderItemRes = responseObject.getData();
 
                     OrderItem orderItem = new OrderItem();
                     orderItem.setProductId(orderItemRes.getProductId());
-                    orderItem.setSellerId(orderItem.getSellerId());
+                    orderItem.setSellerId(orderItemRes.getSellerId());
                     orderItem.setQuantity(count);
                     orderItem.setStatus(orderItemstatus);
 
