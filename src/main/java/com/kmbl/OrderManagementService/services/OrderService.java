@@ -33,10 +33,10 @@ import java.util.ArrayList;
 public class OrderService {
 
     private static final Logger logger = LogManager.getLogger(OrderService.class);
-    
+
     @Value("${inventoryManagementService.endpoint}")
     private String inventoryManagementServiceEndpoint;
-
+    
     private final OrderRepository orderRepository;
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -122,8 +122,6 @@ public class OrderService {
             return null;
         }
     }
-        
-    
 
     public Order updateOrder(Order order) throws ResourceNotFoundException {
         Order existingOrder = orderRepository.findById(order.getOrderId()).orElse(null);
