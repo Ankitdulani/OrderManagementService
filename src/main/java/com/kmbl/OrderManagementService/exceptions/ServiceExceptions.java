@@ -11,4 +11,7 @@ public class ServiceExceptions extends Exception{
         super(message);
         this.exceptionType = type;
     }
+    public Type getExceptionType() {
+        return this.exceptionType;
+    }
 }
