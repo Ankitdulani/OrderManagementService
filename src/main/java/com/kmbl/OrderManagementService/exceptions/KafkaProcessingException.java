@@ -6,7 +6,9 @@ public class KafkaProcessingException extends Exception{
 
     public enum KafkaException{
         INCORRECT_FORMAT("message format incorrect"),
-        MISSING_ORDER_ITEM("order item  doesnt persit in database");
+        MISSING_ORDER("missing order"),
+        MISSING_ORDER_ITEM("order item  doesnt persit in database"),
+        INVALID_MESSAGE("invalid message format");
 
         private String message;
 

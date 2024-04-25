@@ -9,7 +9,9 @@ public class OrderStatus {
 
     static {
         map.put("pending", Status.PENDING);
-        map.put("pre_booked", Status.PAYMENT_DUE);
+        map.put("payment_due", Status.PAYMENT_DUE);
+        map.put("payment_successful", Status.PAYMENT_SUCCESSFUL);
+        map.put("payment_failed", Status.PAYMENT_FAILED);
         map.put("order_completed",Status.ORDER_COMPLETED);
         map.put("order_cancelled",Status.ORDER_CANCELLED);
     }
@@ -21,6 +23,8 @@ public class OrderStatus {
     public enum Status {
         PENDING("pending"),
         PAYMENT_DUE("payment_due"),
+        PAYMENT_SUCCESSFUL("payment_successful"),
+        PAYMENT_FAILED("payment_failed"),
         ORDER_COMPLETED("order_completed"),
         ORDER_CANCELLED("order_cancelled");
         private String value;
