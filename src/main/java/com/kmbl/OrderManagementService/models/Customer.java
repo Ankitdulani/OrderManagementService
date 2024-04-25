@@ -24,7 +24,7 @@ public class Customer implements User {
     private String address;
 
     @DynamoDBAttribute
-    private List<Order> orderHistory;
+    private List<String> orderHistory;
 
     @DynamoDBIgnore
     public UserType getUserType() {
@@ -34,5 +34,10 @@ public class Customer implements User {
     @Override
     public String getName() {
         return name;
+    }
+
+    @DynamoDBIgnore
+    public void addToOrderHistory(String orderId) {
+        orderHistory.add(orderId);
     }
 }

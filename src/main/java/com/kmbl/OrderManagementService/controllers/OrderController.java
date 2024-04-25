@@ -1,8 +1,10 @@
 package com.kmbl.OrderManagementService.controllers;
 
 
+import com.kmbl.OrderManagementService.exceptions.ServiceExceptions;
 import com.kmbl.OrderManagementService.models.Order;
 import com.kmbl.OrderManagementService.services.OrderService;
+import com.kmbl.OrderManagementService.services.utils.ServiceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -41,9 +43,16 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<Order> createOrderDetails(@RequestBody Order order) {
-        Order createdOrder = orderService.createOrder(order);
-        return new ResponseEntity<>(createdOrder, HttpStatus.CREATED);
+    public ResponseEntity<String> createOrderDetails(@RequestBody Order order) {
+        try {
+            Order createdOrder = orderService.createOrder(order);
+            String response = ServiceUtils.convertToString(createdOrder);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        }catch (ResourceNotFoundException ex){
+            return new ResponseEntity<>(ex.getMessage(),HttpStatus.NOT_FOUND);
+        }catch (ServiceExceptions ex){
+            return new ResponseEntity<>(ex.getMessage(),ex.getExceptionType().getStatus());
+        }
     }
 
     @PostMapping(value = "/cancel/{orderId}")
