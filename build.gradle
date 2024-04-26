@@ -33,6 +33,7 @@ dependencies {
 	implementation 'org.springframework.data:spring-data-releasetrain:Lovelace-SR16'
 	implementation 'org.springframework.integration:spring-integration-kafka:6.2.4'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
 
 tasks.named('test') {
