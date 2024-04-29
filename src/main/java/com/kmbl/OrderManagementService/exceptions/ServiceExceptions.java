@@ -4,7 +4,8 @@ public class ServiceExceptions extends Exception{
 
     private Type exceptionType;
     public enum Type{
-        PARSING_EXCEPTION;
+        PARSING_EXCEPTION,
+        BAD_REQUEST;
     }
 
     public ServiceExceptions(Type type,String message) {

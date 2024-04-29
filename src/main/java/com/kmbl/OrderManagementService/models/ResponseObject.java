@@ -1,35 +1,14 @@
 package com.kmbl.OrderManagementService.models;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ResponseObject {
-    private String status;
+    private String orderItemStatus;
     private OrderItem data;
-    private int count;
-
-
-    public int getCount() {
-        return count;
-    }
-
-    public void setCount(int count) {
-        this.count = count;
-    }
-
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-
-    public OrderItem getData() {
-        return data;
-    }
-
-    public void setData(OrderItem data) {
-        this.data = data;
-    }
-
+    private int fullfillCount;
 }

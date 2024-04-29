@@ -14,6 +14,7 @@ public class OrderStatus {
         map.put("payment_failed", Status.PAYMENT_FAILED);
         map.put("order_completed",Status.ORDER_COMPLETED);
         map.put("order_cancelled",Status.ORDER_CANCELLED);
+        map.put("out_of_stock", Status.OUT_OF_STOCK);
     }
 
     public static Status getStatus(String status) {
@@ -22,6 +23,7 @@ public class OrderStatus {
 
     public enum Status {
         PENDING("pending"),
+        OUT_OF_STOCK("out_of_stock"),
         PAYMENT_DUE("payment_due"),
         PAYMENT_SUCCESSFUL("payment_successful"),
         PAYMENT_FAILED("payment_failed"),

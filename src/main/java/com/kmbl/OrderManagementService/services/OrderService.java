@@ -1,24 +1,20 @@
 package com.kmbl.OrderManagementService.services;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.kmbl.OrderManagementService.configuration.Constants;
 import com.kmbl.OrderManagementService.exceptions.KafkaProcessingException;
 import com.kmbl.OrderManagementService.exceptions.ResourceNotFoundException;
-import com.kmbl.OrderManagementService.models.IMSRequestBody;
-import com.kmbl.OrderManagementService.models.IMSResponseObject;
-import com.kmbl.OrderManagementService.models.Order;
-import com.kmbl.OrderManagementService.models.OrderStatus;
-import com.kmbl.OrderManagementService.models.ResponseObject;
+import com.kmbl.OrderManagementService.exceptions.ServiceExceptions;
+import com.kmbl.OrderManagementService.models.*;
 import com.kmbl.OrderManagementService.models.kafka.CancelOrderMessage;
 import com.kmbl.OrderManagementService.models.kafka.PaymentFailureMessage;
 import com.kmbl.OrderManagementService.models.kafka.PaymentMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kmbl.OrderManagementService.models.OrderItem;
 import com.kmbl.OrderManagementService.repositories.OrderRepository;
 
 import reactor.core.publisher.Mono;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -28,34 +24,37 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
 
     private static final Logger logger = LogManager.getLogger(OrderService.class);
 
-    @Value("${inventoryManagementService.endpoint}")
-    private String inventoryManagementServiceEndpoint;
     
     private final OrderRepository orderRepository;
     private final WebClient webClient;
+    private final CustomerService customerService;
     private final ObjectMapper objectMapper;
     private final KafkaMessageProducer messagingService;
     private final DynamoDBMapper mapper;
     
     @Autowired
-    public OrderService(OrderRepository orderRepository, WebClient.Builder webClientBuilder, ObjectMapper objectMapper, KafkaMessageProducer kafkaMessageProducer,DynamoDBMapper mapper) {
+    public OrderService(OrderRepository orderRepository, WebClient webClient, ObjectMapper objectMapper, KafkaMessageProducer kafkaMessageProducer,DynamoDBMapper mapper,CustomerService customerService) {
         this.orderRepository = orderRepository;
-        this.webClient = webClientBuilder.baseUrl(inventoryManagementServiceEndpoint).build();
+        this.webClient = webClient;
         this.objectMapper = objectMapper;
         this.messagingService = kafkaMessageProducer;
+        this.customerService = customerService;
         this.mapper = mapper;
     }
 
 
-    public Order createOrder(Order order) {
+    public OrderDto createOrder(Order order) {
         try {
+            validateOrderRequest(order);
             List<OrderItem> orderItems = order.getOrderItems();
+            Customer customer = customerService.getCustomerById(order.getCustomerId());
             List<IMSRequestBody> imsRequestBodyList = new ArrayList<>();
     
             // Convert OrderItems to IMSRequestBody
@@ -79,48 +78,63 @@ public class OrderService {
     
             // Deserialize JSON to IMSResponseObject
             IMSResponseObject imsResponseObject = objectMapper.readValue(jsonResult, IMSResponseObject.class);
-            String status = imsResponseObject.getInventoryOrderStatus();
+            String status = imsResponseObject.getOrderStatus();
             logger.info("Status from IMS: " + status);
-            logger.info("Data from IMS: " + imsResponseObject.getResponseObjects());
+            logger.info("Data from IMS: " + imsResponseObject.getOrderItemStatus());
     
             // Handle different statuses
-            if ("PARTIAL_ORDER".equals(status) || "COMPLETE_ORDER".equals(status)) {
-
-                List<ResponseObject> responseObjects = imsResponseObject.getResponseObjects();
-
+            if (Constants.ORDER_RESPONSE_STATUS_PARTIAL.equals(status) || Constants.ORDER_RESPONSE_STATUS_COMPLETE.equals(status)) {
+                List<ResponseObject> responseObjects = imsResponseObject.getOrderItemStatus();
                 List<OrderItem> updatedOrderItems = new ArrayList<>();
 
                 for (ResponseObject responseObject : responseObjects) {
                     logger.info("Data from IMS: responseObject" + responseObject.getData());
-                    String orderItemstatus = responseObject.getStatus();
-                    Integer count = responseObject.getCount();
+                    String orderItemstatus = responseObject.getOrderItemStatus();
+                    Integer count = responseObject.getFullfillCount();
                     OrderItem orderItemRes = responseObject.getData();
-
                     OrderItem orderItem = new OrderItem();
                     orderItem.setProductId(orderItemRes.getProductId());
                     orderItem.setSellerId(orderItemRes.getSellerId());
                     orderItem.setQuantity(count);
-                    orderItem.setStatus(orderItemstatus);
-
+                    if( Constants.ORDER_RESPONSE_STATUS_FAILED.equals(orderItemstatus)) orderItem.setStatus(OrderStatus.Status.OUT_OF_STOCK.getValue());
                     updatedOrderItems.add(orderItem);
-                    
                 }
-
                 order.setOrderItems(updatedOrderItems);
+                OrderDto orderDto = new OrderDto(order);
+                List<OrderItem> filteredOrderItem = order.getOrderItems().stream()
+                        .filter( item -> !item.getStatus().equals(OrderStatus.Status.OUT_OF_STOCK.getValue())).collect(Collectors.toList());
+                order.setOrderItems(filteredOrderItem);
+
                 Order savedOrder = orderRepository.save(order);
+                //TODO:: Transactionality is an issue due to multiple table updates.
+                customer.addToOrderHistory(order.getOrderId());
+                customerService.updateCustomer(customer);
                 logger.info("Order saved: " + savedOrder);
-                return savedOrder;
-            } else if ("FAILED_ORDER".equals(status)) {
+                orderDto.setOrderId(savedOrder.getOrderId());
+                orderDto.setUpdateDate(savedOrder.getUpdatedAt());
+                orderDto.setCreateDate(savedOrder.getCreatedAt());
+                return orderDto;
+            } else if (Constants.ORDER_RESPONSE_STATUS_FAILED.equals(status)) {
                 logger.info("Order rejected by IMS.");
                 return null; // Order not created
             } else {
                 logger.error("Unexpected status received from IMS: " + status);
-                
                 return null;
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error occurred while creating order: " + e.getMessage());
             return null;
+        }
+    }
+
+    private void validateOrderRequest(Order order) throws ServiceExceptions{
+        if(order.getCustomerId() == null || order.getCustomerId().isEmpty()) throw new ServiceExceptions(ServiceExceptions.Type.BAD_REQUEST,"customer id is empty");
+        if(order.getOrderItems().size() <= 0 ) throw new ServiceExceptions(ServiceExceptions.Type.BAD_REQUEST, "orderItem List cannot be empty");
+        for(OrderItem item : order.getOrderItems()) {
+            if(item.getSellerId() == null || item.getSellerId().isEmpty()) throw new ServiceExceptions(ServiceExceptions.Type.BAD_REQUEST,"sellerId is empty");
+            if(item.getProductId() == null || item.getProductId().isEmpty()) throw new ServiceExceptions(ServiceExceptions.Type.BAD_REQUEST,"productId is empty");
+            if(item.getQuantity() == null || item.getQuantity() <=0 ) throw new ServiceExceptions(ServiceExceptions.Type.BAD_REQUEST,"quantity cannot be zero or null");
         }
     }
 

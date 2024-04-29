@@ -1,8 +1,11 @@
 package com.kmbl.OrderManagementService.controllers;
 
 
+import com.kmbl.OrderManagementService.exceptions.ServiceExceptions;
 import com.kmbl.OrderManagementService.models.Order;
+import com.kmbl.OrderManagementService.models.OrderDto;
 import com.kmbl.OrderManagementService.services.OrderService;
+import com.kmbl.OrderManagementService.services.utils.ServiceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
+
     private final OrderService orderService;
 
     @Autowired
@@ -41,18 +45,19 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<Order> createOrderDetails(@RequestBody Order order) {
-        Order createdOrder = orderService.createOrder(order);
+    public ResponseEntity<OrderDto> createOrderDetails(@RequestBody Order order) {
+        OrderDto createdOrder = orderService.createOrder(order);
+        if (createdOrder == null) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         return new ResponseEntity<>(createdOrder, HttpStatus.CREATED);
     }
 
     @PostMapping(value = "/cancel/{orderId}")
     public ResponseEntity<Order> cancel(@PathVariable("orderId") String orderId) {
-        try{
+        try {
             Order existingItem = orderService.getOrder(orderId);
             orderService.cancelOrder(existingItem);
-            return new ResponseEntity<>(existingItem,HttpStatus.OK);
-        }catch (ResourceNotFoundException ex){
+            return new ResponseEntity<>(existingItem, HttpStatus.OK);
+        } catch (ResourceNotFoundException ex) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
@@ -60,9 +65,9 @@ public class OrderController {
     @DeleteMapping("/{orderID}")
     public ResponseEntity<Order> deleteOrderDetails(@PathVariable("orderID") String orderID) {
         try {
-          Order order = orderService.getOrder(orderID);
-          orderService.deleteOrder(order.getOrderId());
-          return new ResponseEntity<>(order, HttpStatus.NO_CONTENT);
+            Order order = orderService.getOrder(orderID);
+            orderService.deleteOrder(order.getOrderId());
+            return new ResponseEntity<>(order, HttpStatus.NO_CONTENT);
         } catch (Exception exception) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
